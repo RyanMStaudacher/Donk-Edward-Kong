@@ -7,14 +7,24 @@ public class PlayerController : MonoBehaviour
     [Tooltip("The speed of the player")]
     [SerializeField] private float speed = 5f;
 
-    //[Tooltip("The max speed of the player")]
-    //[SerializeField] private float maxSpeed = 5f;
+    [Tooltip("How high you jump")]
+    [SerializeField] private float jumpSpeed = 5f;
 
+    private Rigidbody2D playerRigidbody;
     private Vector2 touchOrigin;
     private Vector2 newTouchPosition;
     private Animator playerAnimator;
-    private Rigidbody2D playerRigidbody;
     private bool hasSetAnimatorBool = false;
+
+    private void OnEnable()
+    {
+        JumpButton.shouldJump += Jump;
+    }
+
+    private void OnDisable()
+    {
+        JumpButton.shouldJump -= Jump;
+    }
 
     private void Start()
     {
@@ -29,6 +39,7 @@ public class PlayerController : MonoBehaviour
 
     private void TestController()
     {
+        //Get touches
         if(Input.touchCount > 0)
         {
             Touch myTouch = Input.touches[0];
@@ -42,6 +53,7 @@ public class PlayerController : MonoBehaviour
                 newTouchPosition = myTouch.position;
             }
 
+            //Move right
             if(newTouchPosition.x > touchOrigin.x)
             {
                 if(!hasSetAnimatorBool)
@@ -56,16 +68,8 @@ public class PlayerController : MonoBehaviour
                 {
                     GetComponent<SpriteRenderer>().flipX = false;
                 }
-
-                //playerRigidbody.AddForce(Vector2.right * speed * Time.deltaTime);
-
-                //if (playerRigidbody.velocity.magnitude >= maxSpeed)
-                //{
-                //    playerRigidbody.velocity = playerRigidbody.velocity.normalized * maxSpeed;
-                //}
-
-                //transform.rotation = Quaternion.Euler(new Vector3(transform.rotation.x, 0, transform.rotation.z));
             }
+            //Move left
             else if(newTouchPosition.x < touchOrigin.x)
             {
                 if (!hasSetAnimatorBool)
@@ -80,15 +84,6 @@ public class PlayerController : MonoBehaviour
                 {
                     GetComponent<SpriteRenderer>().flipX = true;
                 }
-
-                //playerRigidbody.AddForce(-Vector2.right * speed * Time.deltaTime);
-
-                //if (playerRigidbody.velocity.magnitude >= maxSpeed)
-                //{
-                //    playerRigidbody.velocity = playerRigidbody.velocity.normalized * maxSpeed;
-                //}
-
-                //transform.rotation = Quaternion.Euler(new Vector3(transform.rotation.x, 180, transform.rotation.z));
             }
         }
         else
@@ -97,53 +92,54 @@ public class PlayerController : MonoBehaviour
             hasSetAnimatorBool = false;
         }
 
-        //if (Input.GetKey(KeyCode.D))
-        //{
-        //    if (!hasSetAnimatorBool)
-        //    {
-        //        playerAnimator.SetBool("isMoving", true);
-        //        hasSetAnimatorBool = true;
-        //    }
-        //    transform.Translate(Vector3.right * speed * Time.deltaTime);
+        //Land
+        if (playerRigidbody.velocity.y == 0f && playerAnimator.GetBool("isJumping") == true)
+        {
+            playerAnimator.SetBool("isJumping", false);
+        }
 
-        //    if (GetComponent<SpriteRenderer>().flipX == true)
-        //    {
-        //        GetComponent<SpriteRenderer>().flipX = false;
-        //    }
-        //    //playerRigidbody.AddForce(Vector2.right * speed * Time.deltaTime);
+#if UNITY_EDITOR
+        //Move right
+        if (Input.GetKey(KeyCode.D))
+        {
+            if (!hasSetAnimatorBool)
+            {
+                playerAnimator.SetBool("isMoving", true);
+                hasSetAnimatorBool = true;
+            }
 
-        //    //if (playerRigidbody.velocity.magnitude >= maxSpeed)
-        //    //{
-        //    //    playerRigidbody.velocity = playerRigidbody.velocity.normalized * maxSpeed;
-        //    //}
+            transform.Translate(Vector3.right * speed * Time.deltaTime);
 
-        //    //transform.rotation = Quaternion.Euler(new Vector3(transform.rotation.x, 0, transform.rotation.z));
-        //}
-        //else if (Input.GetKey(KeyCode.A))
-        //{
-        //    if (!hasSetAnimatorBool)
-        //    {
-        //        playerAnimator.SetBool("isMoving", true);
-        //        hasSetAnimatorBool = true;
-        //    }
-        //    transform.Translate(-Vector3.right * speed * Time.deltaTime);
+            if (GetComponent<SpriteRenderer>().flipX == true)
+            {
+                GetComponent<SpriteRenderer>().flipX = false;
+            }
+        }
+        //Move left
+        else if(Input.GetKey(KeyCode.A))
+        {
+            if (!hasSetAnimatorBool)
+            {
+                playerAnimator.SetBool("isMoving", true);
+                hasSetAnimatorBool = true;
+            }
 
-        //    if (GetComponent<SpriteRenderer>().flipX == false)
-        //    {
-        //        GetComponent<SpriteRenderer>().flipX = true;
-        //    }
-        //    //playerRigidbody.AddForce(-Vector2.right * speed * Time.deltaTime);
+            transform.Translate(-Vector3.right * speed * Time.deltaTime);
 
-        //    //if (playerRigidbody.velocity.magnitude >= maxSpeed)
-        //    //{
-        //    //    playerRigidbody.velocity = playerRigidbody.velocity.normalized * maxSpeed;
-        //    //}
+            if (GetComponent<SpriteRenderer>().flipX == false)
+            {
+                GetComponent<SpriteRenderer>().flipX = true;
+            }
+        }
+#endif
+    }
 
-        //    //transform.rotation = Quaternion.Euler(new Vector3(transform.rotation.x, 180, transform.rotation.z));
-        //}
-        //else
-        //{
-        //    //playerAnimator.SetBool("isMoving", false);
-        //}
+    private void Jump()
+    {
+        if(playerRigidbody.velocity.y == 0f && playerAnimator.GetBool("isJumping") == false)
+        {
+            playerRigidbody.AddForce(Vector2.up * jumpSpeed * Time.deltaTime, ForceMode2D.Impulse);
+            playerAnimator.SetBool("isJumping", true);
+        }
     }
 }
